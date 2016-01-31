@@ -395,7 +395,7 @@ public:
     int64_t nNextLocalAddrSend;
 
     // inventory based relay
-    CRollingBloomFilter filterInventoryKnown;
+    mruset<CInv> setInventoryKnown;
     std::vector<CInv> vInventoryToSend;
     CCriticalSection cs_inventory;
     std::set<uint256> setAskFor;
@@ -505,7 +505,7 @@ public:
     {
         {
             LOCK(cs_inventory);
-            filterInventoryKnown.insert(inv.hash);
+            setInventoryKnown.insert(inv);
         }
     }
 
@@ -513,9 +513,8 @@ public:
     {
         {
             LOCK(cs_inventory);
-            if (inv.type == MSG_TX && filterInventoryKnown.contains(inv.hash))
-                return;
-            vInventoryToSend.push_back(inv);
+            if (!setInventoryKnown.count(inv))
+                vInventoryToSend.push_back(inv);
         }
     }
 
